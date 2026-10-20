@@ -81,16 +81,17 @@ repository, and `openspec-fleet schema-sync` reads the schema through it.
 The link is `~/.local/share/openspec/schemas/spec-driven-longish`
 (`$XDG_DATA_HOME/openspec/schemas/` when `XDG_DATA_HOME` is set,
 `%LOCALAPPDATA%\openspec\schemas\` on Windows), pointing at
-`schemas/spec-driven-longish` in a clone of this repository. Remove any
-earlier copy at that path first, since `ln -s` onto an existing directory
-puts the link inside it.
+`schemas/spec-driven-longish` in a clone of this repository. Remove an
+earlier copy at that path (a real directory) first, because `ln` puts the
+new link inside a directory instead of replacing it. The `ln -sfn` below
+replaces an existing link, so it can be run again.
 
 On macOS, Linux and WSL, from the root of a clone:
 
 ```sh
 dir="${XDG_DATA_HOME:-$HOME/.local/share}/openspec/schemas"
 mkdir -p "$dir"
-ln -s "$PWD/schemas/spec-driven-longish" "$dir/spec-driven-longish"
+ln -sfn "$PWD/schemas/spec-driven-longish" "$dir/spec-driven-longish"
 ```
 
 On Windows, in PowerShell from the root of a clone (a junction needs no

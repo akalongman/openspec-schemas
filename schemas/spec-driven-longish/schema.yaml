@@ -572,7 +572,7 @@ apply:
       `### Post-merge checks` checklist, and tick that task once the
       description carries it.
 
-    - **Validation**: run `openspec validate "<name>" --strict` for this
+    - **Validation**: run `openspec validate "<name>" --type change --strict` for this
       change, then the spec validation command named in the project's
       constitution (for example a `specs:lint` script), or
       `openspec validate --specs --strict` when the project names none.

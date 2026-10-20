@@ -57,6 +57,6 @@ else
 fi
 assert_contains "$(cat "$S/templates/proposal.md")" "## Scope & Decisions" "proposal template has Scope & Decisions"
 for h in "## Why" "## What Changes" "## Capabilities" "## Impact"; do assert_contains "$(cat "$S/templates/proposal.md")" "$h" "proposal keeps upstream heading $h"; done
-if cmp -s "$HOME/projects/tsmu/tsmulms/openspec/schemas/spec-driven-longish/templates/summary.md" "$S/templates/summary.md"; then _pass; else _fail "summary template kept"; fi
+assert_eq "$(grep '^## ' "$S/templates/summary.md" | paste -sd '|')" "## Problem|## Solution|## Business Outcome|## Risks & Timing" "summary template has exactly the instruction's four sections, in order"
 
 finish

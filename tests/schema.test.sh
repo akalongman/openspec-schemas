@@ -17,6 +17,7 @@ assert_contains "$(cat "$REPO/README.md")" "SOURCE" "README explains the lineage
 assert_contains "$(head -1 "$REPO/CHANGELOG.md")" "# Changelog" "CHANGELOG has a title"
 assert_contains "$(cat "$REPO/CHANGELOG.md")" "## 2026-10-20" "CHANGELOG has the first dated entry"
 assert_contains "$(cat "$REPO/LICENSE")" "MIT License" "MIT license"
+assert_eq "$(python3 -I -c 'import json,sys;print(json.load(open(sys.argv[1]))["name"])' "$REPO/.github/rulesets/protect-main.json")" "protect-main" "ruleset definition parses and names protect-main"
 
 S="$REPO/schemas/spec-driven-longish"
 

@@ -41,6 +41,7 @@ schemas/spec-driven-longish/templates/     proposal, spec, design, tasks, summar
 UPSTREAM                                   upstream version last merged in
 CHANGELOG.md                               dated entries
 tests/schema.test.sh                       the checks, one command
+.github/rulesets/protect-main.json         the default-branch ruleset on GitHub
 ```
 
 ## Vendoring
@@ -126,8 +127,27 @@ the OpenSpec CLI installed. The test checks that:
   `UPSTREAM`, apart from the `## Scope & Decisions` section in `proposal.md`
   and `summary.md`, which upstream does not have; with another version
   installed, this check is skipped with a notice;
+- `.github/rulesets/protect-main.json` parses and names `protect-main`;
 - `UPSTREAM` names the merged version, and the README, changelog and license
   are in place.
+
+## Maintenance
+
+The repository was created with this command, which is run again only to
+re-create it after a deletion:
+
+```sh
+gh repo create akalongman/openspec-schemas --public --description "Canonical OpenSpec schema spec-driven-longish: clarification interview, stakeholder summary, direct-edit rules"
+```
+
+On a new or re-created repository, the ruleset in
+`.github/rulesets/protect-main.json`, which protects the default branch
+against deletion and force pushes, is applied from the root of a clone before
+the first push:
+
+```sh
+gh api -X POST repos/akalongman/openspec-schemas/rulesets --input .github/rulesets/protect-main.json
+```
 
 ## License
 

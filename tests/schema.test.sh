@@ -32,7 +32,8 @@ mk_project() {
 }
 
 mk_project
-assert_contains "$(cd "$P" && openspec schema validate spec-driven-longish 2>&1)" "is valid" "the schema validates"
+# Mask the user-level schema directory so only the project copy can answer.
+assert_contains "$(cd "$P" && XDG_DATA_HOME="$P/xdg-data" openspec schema validate spec-driven-longish 2>&1)" "is valid" "the schema validates"
 assert_eq "$(python3 -I -c 'import yaml,sys;print(" ".join(a["id"] for a in yaml.safe_load(open(sys.argv[1]))["artifacts"]))' "$S/schema.yaml")" "proposal specs design tasks summary" "artifact order"
 assert_eq "$(python3 -I -c 'import yaml,sys;print(" ".join(yaml.safe_load(open(sys.argv[1]))["apply"]["requires"]))' "$S/schema.yaml")" "tasks summary" "apply requires tasks and summary"
 assert_eq "$(python3 -I -c 'import yaml,sys;print(" ".join(next(a for a in yaml.safe_load(open(sys.argv[1]))["artifacts"] if a["id"]=="summary")["requires"]))' "$S/schema.yaml")" "proposal design tasks" "summary is the terminal artifact"

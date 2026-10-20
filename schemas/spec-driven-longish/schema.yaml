@@ -1,6 +1,6 @@
 name: spec-driven-longish
 version: 1
-description: Default OpenSpec workflow - proposal → specs → design → tasks
+description: "Spec-driven workflow with a mandatory clarification interview and a stakeholder summary: proposal, specs, design, tasks, summary"
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -23,7 +23,11 @@ artifacts:
          prose alongside the multiple-choice block.
       3. The interview MUST cover, at minimum, these four dimensions:
          - **Scope**: what is explicitly in, what is explicitly out.
-         - **Capability placement**: which existing capability from
+         - **Capability placement**: research first, with
+           `openspec list --specs` and then
+           `openspec show "<spec-id>" --type spec --json --no-scenarios`
+           for any spec that looks related (the Capabilities guidance below
+           covers both commands). Then ask which existing capability from
            `openspec/config.yaml`'s capability map owns the new requirements,
            OR justify introducing a new capability.
          - **Acceptance criteria**: what observable behavior or test outcome
@@ -39,13 +43,9 @@ artifacts:
          as needed (there is no cap on rounds) using the same
          multiple-choice-where-possible discipline.
 
-      Why this is mandatory: `propose` generates multiple coupled artifacts
-      (proposal.md, design.md, tasks.md, specs/) in one workflow. Drafting
-      them on incomplete or assumed requirements produces a proposal that
-      looks finished but encodes the wrong scope, lands in the wrong
-      capability, or lacks acceptance criteria. Catching this in the
-      interview takes minutes; catching it after the fact requires unwinding
-      the proposal and any implementation that followed.
+      The interview is mandatory because every artifact `propose` drafts
+      builds on its answers, and an assumed answer can carry the wrong
+      scope, capability or acceptance criteria into all of them.
 
       Only AFTER the interview answers are in hand do you draft the proposal
       below.
@@ -152,6 +152,7 @@ artifacts:
       - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3 hashtags or bullets will fail silently.
       - Every requirement MUST have at least one scenario.
       - Keep each requirement's description (the text between `### Requirement:` and its first scenario) to 500 characters or fewer. `openspec validate` flags longer descriptions in ADDED requirements and in the main spec. This is a warning: normal validation still passes, but `openspec validate --strict` fails on it. When writing a new requirement, state one behavior per requirement: move examples and edge cases into scenarios, and split a requirement that covers several behaviors into separate `### Requirement:` blocks, each with its own scenarios. Under MODIFIED, keep the existing requirement block whole; never split, trim or rewrite existing text just to meet the length. Split an existing long requirement only when the user asks for it, in a change made for that purpose: under MODIFIED, keep its header and every scenario and cut its description down to one behavior without changing its meaning, then add each behavior you removed as its own ADDED requirement with its own scenarios.
+        A maintainer-run normalization of long requirements may also be made by editing the main spec directly, under the invariants of the sanctioned direct edits below.
 
       New capabilities only: the delta spec's first section is `## Purpose` -
       one or two sentences (50+ characters, or `openspec validate --strict`
@@ -194,10 +195,25 @@ artifacts:
       A body correction never rides along; it goes through an ordinary MODIFIED
       delta authored against the corrected titles.
 
-      The spec-loss guard needs no exemption for this and must not be given one:
-      it is deliberately blind to wording, and a title-only, count-preserving
-      retitle is wording. It stays the backstop proving no scenario was dropped
-      alongside the retitle.
+      A project's spec-loss guard, where one exists, needs no exemption for a
+      title-only, count-preserving retitle.
+
+      Sanctioned direct edits: a canonical (main) spec may be edited
+      directly, outside any delta, only in these four categories:
+      1. A scenario retitle, under the SCENARIO TITLE rule above.
+      2. A Purpose fix, including a leftover `TBD` placeholder.
+      3. A maintainer-run length normalization under the 500-character rule.
+      4. A project's own workflow or CI specs amended to follow a change
+         in the shared workflow (this schema, the project's spec
+         validation gate).
+      Invariants shared by all four: every `### Requirement:` title is
+      kept, every scenario title is kept (except those a scenario retitle
+      changes, each recorded as a FROM/TO pair under the retitle rule
+      above), no requirement's scenario count decreases, new requirements
+      and scenarios are allowed, and the edit is recorded in the change's
+      design.md or, outside a change, in the commit message. The fourth
+      category is the only one that may change a requirement's meaning,
+      and only to describe the shared workflow as it now is.
 
       Example (a new capability, so its first section is `## Purpose`):
       ```
@@ -335,25 +351,25 @@ artifacts:
 
       Rules for verification that needs the merged state.
 
-      A change is archived inside its own merge request before that
-      merge request merges, so `tasks.md` MUST NOT contain a task that
-      can only run after the merge. A task is post-merge when it
+      A change is archived inside its own merge request or pull request
+      before that request merges, so `tasks.md` MUST NOT contain a task
+      that can only run after the merge. A task is post-merge when it
       depends on the merged state: a pipeline on the target branch,
-      configuration read from the default branch, or a merge request
-      after this one.
+      configuration read from the default branch, or a request after
+      this one.
 
       Write such verification as a pre-merge task instead, worded like:
-        "Add the post-merge checks to the merge request description
+        "Add the post-merge checks to the request description
          under `### Post-merge checks`: `- [ ] <first check>`,
          `- [ ] <second check>`."
       The task carries the checks verbatim, so the archived `tasks.md`
       still records what is to be verified, and it is ticked before
-      archive. When several changes in one merge request contribute
+      archive. When several changes in one request contribute
       checks, they share the one `### Post-merge checks` section and
       each item names its change.
 
       Once a check runs, its evidence (job link, log line, measured
-      values) is posted as a comment on the merged merge request and
+      values) is posted as a comment on the merged request and
       its `- [ ]` item in the description is ticked.
 
       ---
@@ -375,9 +391,9 @@ artifacts:
 
          | Phase | # | Task | Status |
          |---|---|---|---|
-         | 1 | 1.1 | <one-line summary, leading `1.1 ` stripped> | `[ ]` |
-         | 1 | 1.2 | <…> | `[ ]` |
-         | 2 | 2.1 | <…> | `[ ]` |
+         | 1 | 1.1 | <one-line summary, leading `1.1 ` stripped> | `[ ]` or `[x]` |
+         | 1 | 1.2 | <…> | `[ ]` or `[x]` |
+         | 2 | 2.1 | <…> | `[ ]` or `[x]` |
          | … | … | … | … |
 
       3. Rules for the table:
@@ -387,11 +403,11 @@ artifacts:
          - **Task** column is the description with the leading `N.M `
            stripped, collapsed to a single line, capped at ~120 chars
            (truncate with `…` only when necessary).
-         - **Status** column is `[ ]` for `done: false` and `[x]` for
-           `done: true`. At propose time every row is `[ ]`.
-         - Render every row — do not omit, do not collapse phases into
-           subheadings, do not insert horizontal separators between
-           phases.
+         - **Status** column is `[x]` when `done: true`, `[ ]` otherwise.
+         - Render every row: do not omit rows, collapse phases into
+           subheadings, or insert horizontal separators between phases.
+
+      At propose time every row is `[ ]`.
     requires:
       - specs
       - design
@@ -411,7 +427,7 @@ artifacts:
       Required sections (use exactly these headings, in this order):
 
       - **Problem**: The business pain in plain language. Size this
-        section to the change — no length cap.
+        section to the change; there is no length cap.
       - **Solution**: What we will ship, described in terms a user or
         business stakeholder would recognize. Avoid implementation
         detail.
@@ -427,8 +443,8 @@ artifacts:
       "Suggested commit message" blocks, or any other content after
       the Risks & Timing section. The file ends where Risks & Timing
       ends. The commit-message suggestion described later in this
-      instruction is a chat-level deliverable, NOT a file section —
-      see the explicit boundary below.
+      instruction is a chat-level deliverable, NOT a file section
+      (see the explicit boundary below).
 
       Tone: soft guidance. Write for Product Owners and Managers.
       Focus on business outcome, not implementation. There is no hard
@@ -437,7 +453,7 @@ artifacts:
 
       Source material: read `proposal.md` for motivation,
       `design.md` for risks and migration framing, and `tasks.md` for
-      effort framing. Do NOT copy sections verbatim — translate the
+      effort framing. Do NOT copy sections verbatim; translate the
       technical material into business language.
 
       ---
@@ -457,13 +473,10 @@ artifacts:
       is a CHAT-LEVEL deliverable surfaced in your reply to the user
       AFTER the file is written. It MUST NOT be embedded inside
       `summary.md` (or any other artifact file in the change
-      directory) — no "Suggested commit message" section, no
+      directory): no "Suggested commit message" section, no
       trailing code block, no horizontal rule + footer. The summary
-      file is a stakeholder-facing artifact that lives forever in
-      the change directory and is later archived; a commit message
-      is a one-time conversational suggestion for the engineer
-      running propose. Mixing the two pollutes the artifact and
-      freezes a transient suggestion into permanent spec history.
+      is archived with the change for good, so a one-time commit
+      suggestion inside it would freeze into permanent spec history.
 
       Do NOT run `git commit` yourself; the suggestion is text the
       user can copy, amend, or discard. Follow the project's
@@ -483,7 +496,7 @@ apply:
   instruction: |
     Render the task list as a markdown table at session start AND again
     at completion/pause. Mandatory; do NOT skip. The same table format
-    applies to both renders — only the `Status` column changes as work
+    applies to both renders; only the `Status` column changes as work
     progresses.
 
     Steps for each render:
@@ -511,13 +524,12 @@ apply:
          stripped, collapsed to a single line, capped at ~120 chars
          (truncate with `…` only when necessary).
        - **Status** column is `[x]` when `done: true`, `[ ]` otherwise.
-       - Render every row — do not omit, do not collapse phases into
-         subheadings, do not insert horizontal separators between
-         phases.
+       - Render every row: do not omit rows, collapse phases into
+         subheadings, or insert horizontal separators between phases.
 
     At session start, the table is the headline of the "show current
     progress" output. At completion/pause, the table replaces the
-    bulleted progress summary — readers should see exactly which rows
+    bulleted progress summary; readers should see exactly which rows
     flipped from `[ ]` to `[x]` this session compared to whatever
     started the session.
 
@@ -531,42 +543,49 @@ apply:
     `openspec archive` does NOT perform automatically:
 
     - **Capability map**: If this change creates a new capability spec at
-      `openspec/specs/<name>/spec.md` (typically because the proposal
-      listed it under "New Capabilities"), confirm that the same
+      `openspec/specs/<capability-path>/spec.md` (typically because the
+      proposal listed it under "New Capabilities"), confirm that the same
       kebab-case name appears as an entry in `openspec/config.yaml`'s
-      capability map, grouped under the appropriate area heading
-      (Academic, Platform, etc.). The map is the discovery surface for
-      the spec; an unregistered capability hides from contributors and
-      agents who orient themselves by reading `config.yaml` first. If
-      missing, add the entry now with a one-line description matching
-      the format of sibling entries.
+      capability map, under whichever of the project's area headings
+      fits it. The map is the discovery surface for the spec; an
+      unregistered capability hides from contributors and agents who
+      orient themselves by reading `config.yaml` first. If missing, add
+      the entry now with a one-line description matching the format of
+      sibling entries.
 
-    - **CLAUDE.md capability-spec table** (if the project uses
-      Progressive Disclosure): if a new capability spec was created OR
-      an existing one gained a normative requirement that belongs in
-      the project's headline rules table, add or update the
-      corresponding row in `CLAUDE.md`'s capability-spec table. Keep
-      the summary self-contained per the rule file in
-      `.claude/rules/openspec.md`.
+    - **Capability-spec table** (if the project uses Progressive
+      Disclosure): if a new capability spec was created OR an existing
+      one gained a normative requirement that belongs in the project's
+      headline rules table, add or update the corresponding row in the
+      capability-spec table of the project's constitution (its agent
+      instruction file, such as `AGENTS.md` or `CLAUDE.md`). The table
+      has one row per capability with a rule, each summary under about
+      40 words and self-contained enough to read without the spec.
 
-    - **Archive before merge**: confirm no task in `tasks.md` is
-      post-merge (one that depends on a pipeline on the target branch,
-      configuration read from the default branch, or a merge request
-      after this one). If one is, replace it with a pre-merge task that
-      moves it into the merge request description's
+    - **Archive before merge**: the change is archived inside its own
+      merge request or pull request before that request merges; the
+      archive is never left for after the merge. Confirm no task in
+      `tasks.md` is post-merge (one that depends on a pipeline on the
+      target branch, configuration read from the default branch, or a
+      request after this one). If one is, replace it with a pre-merge
+      task that moves it into the request description's
       `### Post-merge checks` checklist, and tick that task once the
-      description carries it. The change is archived inside its own
-      merge request before that merge request merges; the archive is
-      never left for after the merge.
+      description carries it.
+
+    - **Validation**: run `openspec validate "<name>" --strict` for this
+      change, then the spec validation command named in the project's
+      constitution (for example a `specs:lint` script), or
+      `openspec validate --specs --strict` when the project names none.
+      Both must pass before the work is declared complete.
 
     When ALL tasks are checked off, end the apply session with a
     "## What shipped" section that lists, in this order, only the
     categories with non-empty content for this change:
 
-    - **New HTTP endpoints**: method + path, one per line (e.g. `POST /api/v1/course-equivalencies`).
-    - **New / changed database tables**: table name + one-line summary of the migration intent.
-    - **New artisan commands**: command signature (e.g. `php artisan courses:import-legacy`).
-    - **New permissions / config keys**: full key string (e.g. `courses:view:history`, `services.gemini.project_id`).
+    - **New endpoints**: method and path, one per line.
+    - **New or changed tables**: table name and a one-line summary of the change.
+    - **New commands**: the command signature, one per line.
+    - **New permissions or configuration keys**: the full key string, one per line.
     - **Removed code**: deleted files or significant excisions, one line each.
     - **Follow-ups**: anything intentionally deferred to a separate proposal.
 

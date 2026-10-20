@@ -59,4 +59,53 @@ assert_contains "$(cat "$S/templates/proposal.md")" "## Scope & Decisions" "prop
 for h in "## Why" "## What Changes" "## Capabilities" "## Impact"; do assert_contains "$(cat "$S/templates/proposal.md")" "$h" "proposal keeps upstream heading $h"; done
 assert_eq "$(grep '^## ' "$S/templates/summary.md" | paste -sd '|' -)" "## Problem|## Solution|## Business Outcome|## Risks & Timing" "summary template has exactly the instruction's four sections, in order"
 
+# instruction_block ARTIFACT FIRST [LAST]: print the lines of ARTIFACT's
+# instruction (apply's comes from apply.instruction) from the line containing
+# FIRST to the next blank line or the end of the instruction. With LAST, the
+# block runs on through the line that starts with LAST (leading spaces
+# ignored) and to the next blank line after it. A missing instruction or
+# marker prints a line naming both instead, so two missing blocks never
+# compare equal.
+instruction_block() {
+    python3 -I - "$S/schema.yaml" "$@" <<'EOF'
+import sys
+
+import yaml
+
+path, artifact, first = sys.argv[1:4]
+last = sys.argv[4] if len(sys.argv) > 4 else None
+try:
+    with open(path, encoding="utf-8") as fh:
+        doc = yaml.safe_load(fh)
+    if artifact == "apply":
+        text = doc["apply"]["instruction"]
+    else:
+        text = next(a["instruction"] for a in doc["artifacts"] if a["id"] == artifact)
+    lines = text.split("\n")
+    start = next(i for i, line in enumerate(lines) if first in line)
+    end = start
+    if last is not None:
+        end = next(i for i in range(start, len(lines)) if lines[i].lstrip().startswith(last))
+    while end + 1 < len(lines) and lines[end + 1].strip():
+        end += 1
+    print("\n".join(lines[start:end + 1]))
+except Exception:
+    print("missing: %r in the %s instruction" % (first, artifact))
+EOF
+}
+table_block() { instruction_block "$1" "Render exactly this table:" "- Render every row"; }
+sanctioned_edits_block() { instruction_block specs "Sanctioned direct edits"; }
+
+for tok in composer artisan Academic tsmulms LMS-BACKEND course staging.yml .claude/; do assert_not_contains "$(cat "$S/schema.yaml")" "$tok" "no project token: $tok"; done
+assert_eq "$(python3 -I -c 'import yaml,sys;print(yaml.safe_load(open(sys.argv[1]))["description"])' "$S/schema.yaml")" "Spec-driven workflow with a mandatory clarification interview and a stakeholder summary: proposal, specs, design, tasks, summary" "description"
+# the table block runs from the line 'Render exactly this table:' through the bullet starting 'Render every row'; extracted from the tasks instruction and the apply instruction
+assert_eq "$(table_block tasks)" "$(table_block apply)" "tasks table specified identically in tasks and apply"
+assert_contains "$(cat "$S/schema.yaml")" "500 characters" "500-character rule present"
+assert_contains "$(cat "$S/schema.yaml")" "openspec validate --specs --strict" "apply last-mile strict validation"
+assert_contains "$(cat "$S/schema.yaml")" "skip_specs: true" "skip_specs explained"
+for c in "retitle" "Purpose" "normalization" "workflow or CI specs"; do assert_contains "$(sanctioned_edits_block)" "$c" "sanctioned direct edit: $c"; done
+assert_contains "$(cat "$S/schema.yaml")" "pull request" "wording covers pull requests"
+assert_contains "$(cat "$S/schema.yaml")" "the project's area headings" "capability map wording is neutral"
+assert_not_contains "$(cat "$S/schema.yaml")" "Why this is mandatory" "rationale paragraph cut (item 22)"
+
 finish

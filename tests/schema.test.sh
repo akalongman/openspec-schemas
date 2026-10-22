@@ -103,6 +103,8 @@ assert_eq "$(python3 -I -c 'import yaml,sys;print(yaml.safe_load(open(sys.argv[1
 assert_eq "$(table_block tasks)" "$(table_block apply)" "tasks table specified identically in tasks and apply"
 assert_contains "$(cat "$S/schema.yaml")" "500 characters" "500-character rule present"
 assert_contains "$(cat "$S/schema.yaml")" "openspec validate --specs --strict" "apply last-mile strict validation"
+assert_contains "$(instruction_block apply "**Validation**:" | tr -s '[:space:]' ' ')" "does not block completion: list it under Follow-ups" \
+    "apply validation leaves a corpus finding the change did not introduce to Follow-ups"
 assert_contains "$(cat "$S/schema.yaml")" "skip_specs: true" "skip_specs explained"
 for c in "retitle" "Purpose" "normalization" "workflow or CI specs"; do assert_contains "$(sanctioned_edits_block)" "$c" "sanctioned direct edit: $c"; done
 assert_contains "$(cat "$S/schema.yaml")" "pull request" "wording covers pull requests"

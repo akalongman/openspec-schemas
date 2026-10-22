@@ -576,7 +576,11 @@ apply:
       change, then the spec validation command named in the project's
       constitution (for example a `specs:lint` script), or
       `openspec validate --specs --strict` when the project names none.
-      Both must pass before the work is declared complete.
+      Both must pass before the work is declared complete. A finding of
+      the corpus check that this change did not introduce (a long
+      requirement or a Purpose placeholder in a requirement the change
+      neither adds nor modifies) does not block completion: list it under
+      Follow-ups and leave it to the project's normalization.
 
     When ALL tasks are checked off, end the apply session with a
     "## What shipped" section that lists, in this order, only the

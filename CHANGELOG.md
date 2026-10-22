@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-22
+
+- Apply validation: a corpus finding the change did not introduce goes
+  under Follow-ups for the project's normalization instead of blocking.
+
 ## 2026-10-20
 
 - Canonical `spec-driven-longish` schema created from the tsmulms copy,
